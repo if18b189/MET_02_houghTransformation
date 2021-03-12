@@ -2,6 +2,8 @@
 
 ## Overview
 
+
+
 ## Setup & Installation
 
 ```
@@ -11,5 +13,12 @@ pip install -r requirements.txt
 ```
 
 ## Usage & Details
+
+Source for images: https://pixabay.com/images/search/sample/
+
+( Pixabay License
+Free for commercial use
+No attribution required
+)
 
 ## Screenshots:

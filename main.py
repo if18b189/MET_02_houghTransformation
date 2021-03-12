@@ -33,7 +33,7 @@ class ImagePaths:
     Finds all images and summarizes their paths.
     """
 
-    def __init__(self, path=os.getcwd() + "\\coins", imageType="jpg"):
+    def __init__(self, path=os.getcwd() + "\\images", imageType="jpg"):
         """
         Constructor
         """
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     rightBottomFrame.pack(side='bottom', fill=tk.BOTH, expand=True)
 
     # initial image
-    initImagePath = '.\\coins\\coinb_01.JPG'  # imagepath for the initial image ... when program is started
+    initImagePath = '.\\images\\brick.jpg'  # imagepath for the initial image ... when program is started
     initImage = cv2.imread(initImagePath, cv2.IMREAD_COLOR)
 
     # initializing the image objects/ different views, used in this program
@@ -191,40 +191,6 @@ if __name__ == '__main__':
 
     lbImagePaths = ImagePaths()
     lbImagePaths.fillListBox(lbFileSelection)
-
-    countCoinsButton = tk.Button(master, text='Count Coins', width=15, height=2, command=countCoins)
-    countCoinsButton.pack(side="bottom", padx=10, pady=10)
-
-    openPlotButton = tk.Button(master, text='Plot', width=15, height=2, command=openPlot)
-    openPlotButton.pack(side="bottom", padx=10, pady=10)
-
-    # thresholdBinarySlider
-    thresholdBinarySlider = tk.Scale(master, from_=0, to=255, orient=tk.HORIZONTAL,
-                                     label="Binary Threshold:", command=updateParameter)
-    thresholdBinarySlider.pack(side="top", fill=tk.X, padx=10, pady=2)
-    thresholdBinarySlider.set(127)  # setting to 127, 127 = start/default value for image objects threshold
-
-    # erodeSLider
-    erodeIterationSlider = tk.Scale(master, from_=0, to=20, orient=tk.HORIZONTAL,
-                                    label="Erode Iterations:", command=updateParameter)
-    erodeIterationSlider.pack(side="top", fill=tk.X, padx=10, pady=2)
-    erodeIterationSlider.set(1)  # preset value
-
-    # dilateSlider
-    dilateIterationSlider = tk.Scale(master, from_=0, to=20, orient=tk.HORIZONTAL,
-                                     label="Dilate Iterations:", command=updateParameter)
-    dilateIterationSlider.pack(side="top", fill=tk.X, padx=10, pady=2)
-    dilateIterationSlider.set(1)  # preset value
-
-    # distance operation type combobox
-    distanceTypes = ["DIST_C", "DIST_L1", "DIST_L2",
-                     "DIST_LABEL_PIXEL", "DIST_MASK_3"]
-    distanceTypeLabel = tk.Label(text="Distance Operation:")
-    distanceTypeLabel.pack(side="left", fill=tk.X, padx=10, pady=2)
-    distanceTypeCombo = ttk.Combobox(master, values=distanceTypes)
-    distanceTypeCombo.bind('<<ComboboxSelected>>', updateParameter)
-    distanceTypeCombo.set("DIST_C")
-    distanceTypeCombo.pack(side="top", fill=tk.X, padx=10, pady=2)
 
     master.mainloop()  # window mainloop
 
