@@ -147,9 +147,8 @@ class ImageClass:
                 https://docs.opencv.org/master/d6/d10/tutorial_py_houghlines.html
                 https://docs.opencv.org/master/dd/d1a/group__imgproc__feature.html#ga8618180a5948286384e3b7ca02f6feeb
 
-
-
         """
+
         kernel_size = 3
 
         highThresold = lowThreshold * 3  # " Canny recommended a upper:lower ratio between 2:1 and 3:1. "
