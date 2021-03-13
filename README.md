@@ -7,7 +7,7 @@ After finding the longest edge the image should be rotated so that the edge is o
 
 
 ## Setup & Installation
-
+Tested with Python `3.8.8` other versions may or may not work.
 ```
 git clone https://github.com/if18b189/MET_03_houghTransformation.git
 cd MET_03_houghTransformation
