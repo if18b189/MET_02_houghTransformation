@@ -241,7 +241,7 @@ if __name__ == '__main__':
     initImage = cv.imread(initImagePath, cv.IMREAD_COLOR)
 
     # initializing the image objects/ different views, used in this program
-    imageObject = ImageClass(rightTopFrame, initImage, "rgb", "image one")  # creating image object in rgb(default)
+    imageObject = ImageClass(rightTopFrame, initImage, "rgb", "imageObject")  # creating image object in rgb(default)
 
     # initialization of all images, copied from callbackFileSelection function
 
