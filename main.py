@@ -135,7 +135,7 @@ class ImageClass:
 
     def findLongEdgeRotate(self, lowThreshold=50, houghLineThresh=50, minLineLen=50, maxLineGap=10, rotationOffset=0):
         """
-        Applies multiple operations and marks the longest detected edge in the image in yellow.
+        Applies multiple operations and marks the longest detected edge in the image.
         Rotates the entire image according to the angle of the longest detected edge
 
         Important sources:
@@ -175,7 +175,7 @@ class ImageClass:
                 longestLineDist = dist  # length
                 longestLine = line[0]  # coordinates
 
-        # marking the longest line in yellow
+        # marking the longest line in green
         cv.line(edges, (longestLine[0], longestLine[1]), (longestLine[2], longestLine[3]), color=(0, 255, 0),
                 thickness=3)
 
