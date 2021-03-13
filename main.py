@@ -6,20 +6,22 @@ useful links and sources:
 
 
 """
-from tkinter import ttk, messagebox
 
 import cv2 as cv
-import matplotlib
 import numpy as np
 import glob
-import pathlib
 import tkinter as tk
 from PIL import Image, ImageTk
 import os
+import math
 
-# printing bigger np matrix
+# useful for debugging purposes, making the entire numpy array visible when printed
 # # a = np.arange(127 * 127).reshape(127, 127)
 np.set_printoptions(edgeitems=127)  # this line sets the amount you want to print
+
+# the resolution in which the images will be displayed
+resolutionX = 800
+resolutionY = 600
 
 
 class ImagePaths:
@@ -62,13 +64,13 @@ class ImageClass:
         """
 
         self.title = title
-        self.originalImage = ImageTk.PhotoImage(image=Image.fromarray(imageArray))
-        self.originalImageArray = imageArray
+        self.imageOriginal = ImageTk.PhotoImage(image=Image.fromarray(imageArray))
+        self.imageOriginalArray = imageArray  # remains unchanged
 
-        self.imageArray = imageArray
+        self.imageArray = imageArray  # stores the results of operations, transformations, ...
         self.colorType = colorType
 
-        self.newSize = (800, 600)  # default size for all images displayed in the program
+        self.newSize = (resolutionX, resolutionY)  # default size for all images displayed in the program
         resized = cv.resize(self.imageArray, self.newSize)
         self.image = ImageTk.PhotoImage(image=Image.fromarray(resized))
 
@@ -95,8 +97,8 @@ class ImageClass:
 
         self.image = ImageTk.PhotoImage(image=Image.fromarray(convertedImageArray))
         self.imageArray = convertedImageArray
-        self.originalImage = ImageTk.PhotoImage(image=Image.fromarray(convertedImageArray))
-        self.originalImageArray = convertedImageArray
+        self.imageOriginal = ImageTk.PhotoImage(image=Image.fromarray(convertedImageArray))
+        self.imageOriginalArray = convertedImageArray
         self.updateImage()
 
     def updateImage(self):
@@ -116,8 +118,8 @@ class ImageClass:
         """
         Returns the image and imageArray to their original values (the values, they were initialized with).
         """
-        self.imageArray = self.originalImageArray
-        self.image = self.originalImage
+        self.imageArray = self.imageOriginalArray
+        self.image = self.imageOriginal
 
     def getImage(self):
         """
@@ -131,9 +133,10 @@ class ImageClass:
         """
         return self.imageArray
 
-    def findLongEdge(self, lowThreshold=50, houghLineThresh = 50, minLineLen = 50, maxLineGap = 10):
+    def findLongEdgeRotate(self, lowThreshold=50, houghLineThresh=50, minLineLen=50, maxLineGap=10, rotationOffset=0):
         """
-        Applies multiple operations and returns/shows longest edge.
+        Applies multiple operations and marks the longest detected edge in the image in yellow.
+        Rotates the entire image according to the angle of the longest detected edge
 
         Important sources:
             canny:
@@ -144,45 +147,47 @@ class ImageClass:
                 https://docs.opencv.org/master/d6/d10/tutorial_py_houghlines.html
                 https://docs.opencv.org/master/dd/d1a/group__imgproc__feature.html#ga8618180a5948286384e3b7ca02f6feeb
 
+
+
         """
         kernel_size = 3
 
         highThresold = lowThreshold * 3  # " Canny recommended a upper:lower ratio between 2:1 and 3:1. "
 
         gray = cv.cvtColor(self.imageArray, cv.COLOR_RGB2GRAY)  # depending on previous conversions (RGB)
-        edges = cv.Canny(gray, lowThreshold, highThresold, kernel_size)
-        lines = cv.HoughLinesP(edges, rho=1, theta=np.pi / 180, threshold=houghLineThresh, minLineLength=minLineLen, maxLineGap=maxLineGap)
+        edges = cv.Canny(gray, lowThreshold, highThresold, kernel_size)  # canny edge detection
+        lines = cv.HoughLinesP(edges, rho=1, theta=np.pi / 180, threshold=houghLineThresh, minLineLength=minLineLen,
+                               maxLineGap=maxLineGap)
 
-        longestLineDist = 0.0
-        longestLine = lines[0][0]
+        longestLineDist = 0.0  # stores longest line distance
+        longestLine = lines[0][0]  # stores coordinates ...
 
-        edges = cv.cvtColor(edges, cv.COLOR_GRAY2RGB) # changing back to RGB, displaying line colours
+        edges = cv.cvtColor(edges, cv.COLOR_GRAY2RGB)  # converting to RGB (to display different line colors)
 
+        # drawing all the lines from the HoughLinesP operation on an image (could also be the original image)
         for line in lines:
-            x1, y1, x2, y2 = line[0]
+            x1, y1, x2, y2 = line[0]  # getting P1 & P2 coordinates
 
-            cv.line(edges, pt1=(x1, y1), pt2=(x2, y2), color=(255, 0, 0), thickness=2) # drawing lines on image
+            cv.line(edges, pt1=(x1, y1), pt2=(x2, y2), color=(255, 0, 0), thickness=2)  # drawing all lines in red
 
             dist = np.math.hypot(x2 - x1, y2 - y1)  # calculating distance of each line
 
             if dist > longestLineDist:  # getting the longest line
-                longestLineDist = dist
-                longestLine = line[0]
+                longestLineDist = dist  # length
+                longestLine = line[0]  # coordinates
 
-        print(longestLineDist)
-        print(longestLine)
+        # marking the longest line in yellow
+        cv.line(edges, (longestLine[0], longestLine[1]), (longestLine[2], longestLine[3]), color=(0, 255, 0),
+                thickness=3)
 
-        cv.line(edges, (longestLine[0], longestLine[1]), (longestLine[2], longestLine[3]), color=(0, 255, 0), thickness= 3)
+        x1, y1, x2, y2 = longestLine  # setting coordinates for P1(x1,y1)/P2(x2,y2) of the longest line for further operations
 
-        x1, y1, x2, y2 = longestLine
+        # calculating angle of the line in degrees
+        angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
 
-        # calculate angle in radian, if you need it in degrees just do angle * 180 / PI
-        angle = np.arctan2([y2, y1], [x2, x1]) * 180 / np.pi
-
-        M = cv.getRotationMatrix2D((400, 300), 90-angle[1], 1)
+        # rotating the image according to the calculated angle + rotationOffset from slider
+        M = cv.getRotationMatrix2D((resolutionX / 2, resolutionY / 2), rotationOffset + angle, 1)
         rotated = cv.warpAffine(edges, M, (edges.shape[1], edges.shape[0]))
-
-        print(angle)
 
         self.imageArray = rotated
         self.updateImage()
@@ -190,13 +195,14 @@ class ImageClass:
 
 def updateParameter(event):
     """
-    Applies the value from the threshold slider on following image objects.
+    Applies the value from the UI(sliders, ...) on following image objects.
     """
-    originalImage.reset()
-    originalImage.findLongEdge(int(lowThreshCannySlider.get()),
-                               int(houghLineThreshSlider.get()),
-                               int(minLineLenSlider.get()),
-                               int(maxLineGapSlider.get()))
+    imageObject.reset()
+    imageObject.findLongEdgeRotate(int(lowThreshCannySlider.get()),
+                                   int(houghLineThreshSlider.get()),
+                                   int(minLineLenSlider.get()),
+                                   int(maxLineGapSlider.get()),
+                                   int(rotationOffsetSlider.get()))
 
 
 def callbackFileSelection(event):
@@ -210,8 +216,8 @@ def callbackFileSelection(event):
     selection = event.widget.curselection()
     selectedImagePath = lbImagePaths.getPath(selection[0])
 
-    # updating originalImage
-    originalImage.setImage(selectedImagePath)
+    # updating imageObject
+    imageObject.setImage(selectedImagePath)
 
 
 if __name__ == '__main__':
@@ -231,31 +237,22 @@ if __name__ == '__main__':
     rightBottomFrame = tk.Frame(rightFrame)
     rightBottomFrame.pack(side='bottom', fill=tk.BOTH, expand=True)
 
-    # img = cv.imread(cv.samples.findFile('.\\images\\brick.jpg'))
-    # gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    # edges = cv.Canny(gray, 190, 255, apertureSize=3)
-    # cv.imshow("gray", edges)
-    # lines = cv.HoughLinesP(edges, 1, np.pi / 180, 100, minLineLength=100, maxLineGap=10)
-    # for line in lines:
-    #     x1, y1, x2, y2 = line[0]
-    #     cv.line(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-    # cv.imshow('houghlines5.jpg', img)
-
     # initial image
     initImagePath = '.\\images\\brick.jpg'  # imagepath for the initial image ... when program is started
     initImage = cv.imread(initImagePath, cv.IMREAD_COLOR)
 
     # initializing the image objects/ different views, used in this program
-    originalImage = ImageClass(rightTopFrame, initImage, "rgb", "image one")  # creating image object in rgb(default)
+    imageObject = ImageClass(rightTopFrame, initImage, "rgb", "image one")  # creating image object in rgb(default)
 
     # initialization of all images, copied from callbackFileSelection function
 
-    # updating originalImage
-    originalImage.setImage(initImagePath)
-    originalImage.findLongEdge()
+    # updating imageObject
+    imageObject.setImage(initImagePath)
+    imageObject.findLongEdgeRotate()
 
     # initialization of GUI objects
 
+    # Listbox for file selection
     lbFileSelection = tk.Listbox(master, width=30)  # creating a listbox
     lbFileSelection.bind("<<ListboxSelect>>",
                          callbackFileSelection)  # callback function for listbox ... executes when you select an entry
@@ -265,30 +262,36 @@ if __name__ == '__main__':
     lbImagePaths = ImagePaths()
     lbImagePaths.fillListBox(lbFileSelection)
 
-    # Low Threshold Canny
+    # Low Threshold Canny Slider
     lowThreshCannySlider = tk.Scale(master, from_=0, to=255, orient=tk.HORIZONTAL,
                                     label="Low Threshold Canny:", command=updateParameter)
     lowThreshCannySlider.pack(side="top", fill=tk.X, padx=10, pady=2)
     lowThreshCannySlider.set(127)  # setting to 127, 127 = start/default value for image objects threshold
 
-    # Hough Lines Threshold
+    # Hough Lines Threshold Slider
     houghLineThreshSlider = tk.Scale(master, from_=0, to=255, orient=tk.HORIZONTAL,
                                      label="Hough Lines Threshold:", command=updateParameter)
     houghLineThreshSlider.pack(side="top", fill=tk.X, padx=10, pady=2)
     houghLineThreshSlider.set(50)
 
-    # Min Line Length
+    # Min Line Length Slider
     minLineLenSlider = tk.Scale(master, from_=0, to=255, orient=tk.HORIZONTAL,
-                                     label="Min Line Length:", command=updateParameter)
+                                label="Min Line Length:", command=updateParameter)
     minLineLenSlider.pack(side="top", fill=tk.X, padx=10, pady=2)
     minLineLenSlider.set(50)
 
-    # Max Line Gap
+    # Max Line Gap Slider
     # needs lower maxValue
     maxLineGapSlider = tk.Scale(master, from_=0, to=30, orient=tk.HORIZONTAL,
-                                     label="Max Line Gap:", command=updateParameter)
+                                label="Max Line Gap:", command=updateParameter)
     maxLineGapSlider.pack(side="top", fill=tk.X, padx=10, pady=2)
     maxLineGapSlider.set(10)
+
+    # Manual Rotation Offset Slider
+    rotationOffsetSlider = tk.Scale(master, from_=-90, to=90, orient=tk.HORIZONTAL,
+                                    label="Rotation Offset:", command=updateParameter)
+    rotationOffsetSlider.pack(side="top", fill=tk.X, padx=10, pady=2)
+    rotationOffsetSlider.set(0)
 
     master.mainloop()  # window mainloop
 
